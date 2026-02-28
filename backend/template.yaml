@@ -15,17 +15,11 @@ Globals:
         BEDROCK_MODEL_ID: !Ref BedrockModelId
         BEDROCK_REGION: !Ref AWS::Region
         JUDGE0_API_URL: !Ref Judge0ApiUrl
-        JUDGE0_API_KEY: !Ref Judge0ApiKey
         JUDGE0_API_HOST: !Ref Judge0ApiHost
         S3_BUCKET_NAME: !Ref LogsBucket
         FRONTEND_URL: !Ref FrontendUrl
         NODE_ENV: production
     Tracing: Active
-  Api:
-    Cors:
-      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
-      AllowHeaders: "'Content-Type,Authorization,X-Amz-Date'"
-      AllowOrigin: !Sub "'${FrontendUrl}'"
 
 Parameters:
   TablePrefix:
@@ -40,10 +34,6 @@ Parameters:
     Type: String
     Default: https://judge0-ce.p.rapidapi.com
     Description: Judge0 API base URL
-  Judge0ApiKey:
-    Type: String
-    NoEcho: true
-    Description: RapidAPI key for Judge0
   Judge0ApiHost:
     Type: String
     Default: judge0-ce.p.rapidapi.com
@@ -52,11 +42,48 @@ Parameters:
     Type: String
     Default: '*'
     Description: Amplify frontend URL for CORS (e.g. https://myapp.amplifyapp.com)
+  JwtIssuer:
+    Type: String
+    Default: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_example
+    Description: JWT Issuer URL for the API Authorizer
+  JwtAudience:
+    Type: String
+    Default: example-audience
+    Description: JWT Audience for the API Authorizer
 
 # ============================================================
 # Lambda Functions
 # ============================================================
 Resources:
+
+  ServerlessHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+          - X-Amz-Date
+        AllowOrigins:
+          - !Ref FrontendUrl
+      Auth:
+        DefaultAuthorizer: JwtAuthorizer
+        Authorizers:
+          JwtAuthorizer:
+            JwtConfiguration:
+              issuer: !Ref JwtIssuer
+              audience:
+                - !Ref JwtAudience
+            IdentitySource: "$request.header.Authorization"
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 100
+        ThrottlingRateLimit: 50
 
   GenerateRoadmapFunction:
     Type: AWS::Serverless::Function
@@ -78,6 +105,7 @@ Resources:
         Api:
           Type: HttpApi
           Properties:
+            ApiId: !Ref ServerlessHttpApi
             Path: /api/roadmap/generate
             Method: POST
 
@@ -97,6 +125,7 @@ Resources:
         Api:
           Type: HttpApi
           Properties:
+            ApiId: !Ref ServerlessHttpApi
             Path: /api/concept/simplify
             Method: POST
 
@@ -118,6 +147,7 @@ Resources:
         Api:
           Type: HttpApi
           Properties:
+            ApiId: !Ref ServerlessHttpApi
             Path: /api/quiz/generate
             Method: POST
 
@@ -128,7 +158,7 @@ Resources:
       Handler: functions/analyzeCode.lambdaHandler
       CodeUri: dist/
       Description: Execute code via Judge0, explain via Bedrock, log to DynamoDB
-      Timeout: 60
+      Timeout: 29
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref CodeLogsTable
@@ -138,10 +168,15 @@ Resources:
           - Effect: Allow
             Action: bedrock:InvokeModel
             Resource: !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-sonnet-*
+        - Statement:
+          - Effect: Allow
+            Action: ssm:GetParameter
+            Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/studdybuddy/prod/judge0-api-key
       Events:
         Api:
           Type: HttpApi
           Properties:
+            ApiId: !Ref ServerlessHttpApi
             Path: /api/code/analyze
             Method: POST
 
@@ -152,7 +187,7 @@ Resources:
       Handler: functions/evaluateSolution.lambdaHandler
       CodeUri: dist/
       Description: Evaluate exercises via Judge0 + Bedrock, update XP and proficiency
-      Timeout: 60
+      Timeout: 29
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
@@ -164,10 +199,15 @@ Resources:
           - Effect: Allow
             Action: bedrock:InvokeModel
             Resource: !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-sonnet-*
+        - Statement:
+          - Effect: Allow
+            Action: ssm:GetParameter
+            Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/studdybuddy/prod/judge0-api-key
       Events:
         Api:
           Type: HttpApi
           Properties:
+            ApiId: !Ref ServerlessHttpApi
             Path: /api/solution/evaluate
             Method: POST
 
@@ -187,6 +227,7 @@ Resources:
         Api:
           Type: HttpApi
           Properties:
+            ApiId: !Ref ServerlessHttpApi
             Path: /api/xp/update
             Method: POST
 
@@ -204,6 +245,7 @@ Resources:
         Api:
           Type: HttpApi
           Properties:
+            ApiId: !Ref ServerlessHttpApi
             Path: /api/reviews/{userId}
             Method: GET
 
@@ -227,8 +269,93 @@ Resources:
         Api:
           Type: HttpApi
           Properties:
+            ApiId: !Ref ServerlessHttpApi
             Path: /api/progress/{userId}
             Method: GET
+
+  GenerateFlashcardsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${TablePrefix}-generateFlashcards
+      Handler: functions/generateFlashcards.lambdaHandler
+      CodeUri: dist/
+      Description: Generate study flashcards using Bedrock
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0'
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ServerlessHttpApi
+            Path: /api/flashcards/generate
+            Method: POST
+
+  SaveFlashcardSessionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${TablePrefix}-saveFlashcardSession
+      Handler: functions/saveFlashcardSession.lambdaHandler
+      CodeUri: dist/
+      Description: Save flashcard session and update XP
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref FlashcardSessionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ServerlessHttpApi
+            Path: /api/flashcards/session
+            Method: POST
+
+  StartStudySessionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${TablePrefix}-startStudySession
+      Handler: functions/startStudySession.lambdaHandler
+      CodeUri: dist/
+      Description: Start a deep study session
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref StudySessionsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ServerlessHttpApi
+            Path: /api/study/start
+            Method: POST
+
+  CompleteStudySessionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${TablePrefix}-completeStudySession
+      Handler: functions/completeStudySession.lambdaHandler
+      CodeUri: dist/
+      Description: Complete a deep study session and evaluate with Bedrock
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref StudySessionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0'
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ServerlessHttpApi
+            Path: /api/study/complete
+            Method: POST
 
 # ============================================================
 # DynamoDB Tables
@@ -380,6 +507,42 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: !Sub ${TablePrefix}-concepts
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+
+  FlashcardSessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${TablePrefix}-flashcards
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+
+  StudySessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${TablePrefix}-studysessions
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: PK

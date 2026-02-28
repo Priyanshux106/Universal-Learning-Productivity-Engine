@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm'
 import {
   Judge0LanguageId,
   Judge0Result,
@@ -9,7 +10,7 @@ import {
 import { logger } from './logger'
 
 const JUDGE0_URL = process.env.JUDGE0_API_URL || 'https://judge0-ce.p.rapidapi.com'
-const JUDGE0_KEY = process.env.JUDGE0_API_KEY || ''
+let JUDGE0_KEY = '' // Fetched from SSM
 const JUDGE0_HOST = process.env.JUDGE0_API_HOST || 'judge0-ce.p.rapidapi.com'
 
 const MAX_POLL_ATTEMPTS = 20
@@ -18,10 +19,30 @@ const POLL_INTERVAL_MS = 500
 // Status codes that mean "still running"
 const PENDING_STATUS_IDS = new Set([1, 2]) // In Queue, Processing
 
-const headers = {
-  'Content-Type': 'application/json',
-  'X-RapidAPI-Key': JUDGE0_KEY,
-  'X-RapidAPI-Host': JUDGE0_HOST,
+async function getApiKey(): Promise<string> {
+  if (JUDGE0_KEY) return JUDGE0_KEY
+
+  const ssm = new SSMClient({ region: process.env.AWS_REGION || 'us-east-1' })
+  try {
+    const res = await ssm.send(new GetParameterCommand({
+      Name: '/studdybuddy/prod/judge0-api-key',
+      WithDecryption: true
+    }))
+    JUDGE0_KEY = res.Parameter?.Value || ''
+    return JUDGE0_KEY
+  } catch (err) {
+    logger.error('Failed to fetch Judge0 API key from SSM', { error: (err as Error).message })
+    throw err
+  }
+}
+
+async function getHeaders() {
+  const key = await getApiKey()
+  return {
+    'Content-Type': 'application/json',
+    'X-RapidAPI-Key': key,
+    'X-RapidAPI-Host': JUDGE0_HOST,
+  }
 }
 
 /**
@@ -52,10 +73,12 @@ async function submitCode(
     stdin,
   }
 
+  const currentHeaders = await getHeaders()
+
   const response = await axios.post<{ token: string }>(
     `${JUDGE0_URL}/submissions?base64_encoded=false&wait=false`,
     payload,
-    { headers }
+    { headers: currentHeaders }
   )
 
   return response.data.token
@@ -66,12 +89,14 @@ async function submitCode(
  * Polls every 500ms, up to 20 attempts (10s total).
  */
 async function pollResult(token: string): Promise<Judge0Result> {
+  const currentHeaders = await getHeaders()
+
   for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
 
     const response = await axios.get<Judge0Result>(
       `${JUDGE0_URL}/submissions/${token}?base64_encoded=false`,
-      { headers }
+      { headers: currentHeaders }
     )
 
     const result = response.data

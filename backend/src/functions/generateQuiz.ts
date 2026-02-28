@@ -14,11 +14,6 @@ import {
 
 function validateRequest(data: unknown): GenerateQuizRequest {
   const req = data as GenerateQuizRequest
-  if (!req.userId) {
-    const err = new Error('userId is required')
-    ;(err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
-    throw err
-  }
   if (!req.conceptIds?.length) {
     const err = new Error('At least one conceptId is required')
     ;(err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
@@ -33,7 +28,13 @@ const handler = async (
   event: APIGatewayProxyEventV2,
   context: Context
 ): Promise<APIGatewayProxyResultV2> => {
+  const userId = (event.requestContext as any).authorizer?.jwt?.claims?.sub as string
+  if (!userId) {
+    throw Object.assign(new Error('Unauthorized'), { code: ErrorCode.UNAUTHORIZED })
+  }
+
   const req = parseBody(event, validateRequest)
+  req.userId = userId
   logger.setContext(context.awsRequestId, req.userId, 'generateQuiz')
   logger.info('Generating quiz', {
     userId: req.userId,

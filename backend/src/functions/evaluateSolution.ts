@@ -22,8 +22,13 @@ interface StoredExercise extends Exercise {
 
 function validateRequest(data: unknown): EvaluateSolutionRequest {
   const req = data as EvaluateSolutionRequest
-  if (!req.userId || !req.exerciseId || !req.solution || !req.language) {
-    const err = new Error('userId, exerciseId, solution, and language are required')
+  if (!req.exerciseId || !req.solution || !req.language) {
+    const err = new Error('exerciseId, solution, and language are required')
+      ; (err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
+    throw err
+  }
+  if (Buffer.byteLength(req.solution, 'utf8') > 64 * 1024) {
+    const err = new Error('Solution exceeds maximum size of 64KB')
     ;(err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
     throw err
   }
@@ -34,7 +39,13 @@ const handler = async (
   event: APIGatewayProxyEventV2,
   context: Context
 ): Promise<APIGatewayProxyResultV2> => {
+  const userId = (event.requestContext as any).authorizer?.jwt?.claims?.sub as string
+  if (!userId) {
+    throw Object.assign(new Error('Unauthorized'), { code: ErrorCode.UNAUTHORIZED })
+  }
+
   const req = parseBody(event, validateRequest)
+  req.userId = userId
   logger.setContext(context.awsRequestId, req.userId, 'evaluateSolution')
   logger.info('Evaluating solution', { userId: req.userId, exerciseId: req.exerciseId })
 

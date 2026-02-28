@@ -40,11 +40,9 @@ const handler = async (
   event: APIGatewayProxyEventV2,
   context: Context
 ): Promise<APIGatewayProxyResultV2> => {
-  const userId = event.pathParameters?.userId
+  const userId = (event.requestContext as any).authorizer?.jwt?.claims?.sub as string
   if (!userId) {
-    const err = new Error('userId path parameter is required')
-    ;(err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
-    throw err
+    throw Object.assign(new Error('Unauthorized'), { code: ErrorCode.UNAUTHORIZED })
   }
 
   logger.setContext(context.awsRequestId, userId, 'getUserProgress')

@@ -40,11 +40,6 @@ const ALL_BADGES: Record<string, Badge> = {
 
 function validateRequest(data: unknown): UpdateXPRequest {
   const req = data as UpdateXPRequest
-  if (!req.userId) {
-    const err = new Error('userId is required')
-    ;(err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
-    throw err
-  }
   if (!req.action || !['exercise_complete', 'quiz_complete', 'streak_bonus', 'milestone'].includes(req.action)) {
     const err = new Error('Invalid action type')
     ;(err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
@@ -62,7 +57,13 @@ const handler = async (
   event: APIGatewayProxyEventV2,
   context: Context
 ): Promise<APIGatewayProxyResultV2> => {
+  const userId = (event.requestContext as any).authorizer?.jwt?.claims?.sub as string
+  if (!userId) {
+    throw Object.assign(new Error('Unauthorized'), { code: ErrorCode.UNAUTHORIZED })
+  }
+
   const req = parseBody(event, validateRequest)
+  req.userId = userId
   logger.setContext(context.awsRequestId, req.userId, 'updateXP')
   logger.info('Updating XP', { userId: req.userId, action: req.action, points: req.points })
 

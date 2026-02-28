@@ -1,148 +1,166 @@
 "use client";
 
-import { User, Zap, Flame, Trophy, BookOpen, Code2, Mail, Github, Edit3, Shield, Bell } from "lucide-react";
-
-const badges = [
-  { icon: "🔥", label: "14-Day Streak", desc: "Consistency wizard" },
-  { icon: "⚡", label: "XP Grinder", desc: "Earned 1000+ XP in a week" },
-  { icon: "🧩", label: "Algorithm Ace", desc: "Solved 10 DSA challenges" },
-  { icon: "🌐", label: "AWS Explorer", desc: "Completed AWS module" },
-  { icon: "🏆", label: "Quiz Champion", desc: "Aced 5 quizzes in a row" },
-  { icon: "💡", label: "Curious Mind", desc: "Simplified 50 concepts" },
-];
-
-const stats = [
-  { icon: Zap, label: "Total XP", value: "2,450", color: "text-aura-primary" },
-  { icon: Flame, label: "Best Streak", value: "21 days", color: "text-orange-400" },
-  { icon: Trophy, label: "Quizzes Aced", value: "32", color: "text-amber-400" },
-  { icon: BookOpen, label: "Concepts Learned", value: "87", color: "text-blue-400" },
-  { icon: Code2, label: "Code Analyses", value: "24", color: "text-green-400" },
-];
+import { useState } from "react";
+import { User, Mail, Briefcase, Target, Clock, Bell, Settings, Save, Sparkles, ShieldCheck } from "lucide-react";
 
 export default function ProfilePage() {
+  const [activeTab, setActiveTab] = useState("general");
+  const [reminders, setReminders] = useState(true);
+  const [reports, setReports] = useState(false);
+
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-black text-aura-text flex items-center gap-3">
-          <User className="text-aura-primary" size={28} /> User Profile
-        </h1>
-        <p className="text-aura-muted mt-1 text-sm">Your learning identity, badges, and achievements.</p>
-      </div>
-
-      {/* Profile hero */}
-      <div className="card p-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-72 h-48 opacity-10 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse, #7c6af7, transparent)" }} />
-
-        <div className="relative flex flex-col sm:flex-row gap-6 items-start">
+    <div className="flex flex-col min-h-[calc(100vh-80px)] bg-slate-50">
+      
+      {/* Top Header Background */}
+      <div className="bg-white border-b border-slate-200 px-8 py-10 md:py-16">
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-6 md:gap-8">
           {/* Avatar */}
-          <div className="relative flex-shrink-0">
-            <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-4xl font-black"
-              style={{ background: "linear-gradient(135deg, #7c6af7, #5b5af0)", boxShadow: "0 0 30px rgba(124,106,247,0.4)" }}>
-              P
+          <div className="relative">
+            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-xl shadow-blue-900/10 overflow-hidden bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+              <span className="text-4xl md:text-5xl font-black text-blue-600">P</span>
             </div>
-            <div className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full bg-aura-card border-2 border-aura-primary flex items-center justify-center">
-              <span className="text-[10px] font-bold text-aura-primary">12</span>
-            </div>
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 space-y-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-2xl font-black text-aura-text">Priyanshux106</h2>
-              <span className="badge-primary text-xs">Intermediate</span>
-              <span className="badge-success text-xs">Pro Plan</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-aura-muted">
-              <Mail size={13} /> <span>priyanshux@example.com</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-aura-muted">
-              <Github size={13} /> <span>github.com/Priyanshux106</span>
-            </div>
-            <p className="text-sm text-aura-muted pt-2 max-w-md">
-              Full-stack developer and AI enthusiast. Learning AWS architecture, system design, and advanced React patterns.
-            </p>
-          </div>
-
-          <button className="btn-secondary text-sm flex-shrink-0">
-            <Edit3 size={14} /> Edit Profile
-          </button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {stats.map(({ icon: Icon, label, value, color }) => (
-          <div key={label} className="card p-4 text-center">
-            <Icon size={18} className={`${color} mx-auto mb-2`} />
-            <div className="text-xl font-black text-aura-text">{value}</div>
-            <div className="text-[10px] text-aura-muted mt-0.5">{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Level progress */}
-      <div className="card p-6">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <span className="text-sm font-semibold text-aura-text">Level 12 — Intermediate</span>
-            <div className="text-xs text-aura-muted mt-0.5">2,450 / 3,000 XP · 550 XP to Level 13</div>
-          </div>
-          <span className="gradient-text font-bold text-lg">Level 12</span>
-        </div>
-        <div className="xp-bar">
-          <div className="progress-fill" style={{ width: "72%" }} />
-        </div>
-      </div>
-
-      {/* Badges */}
-      <div className="card p-6 space-y-4">
-        <h2 className="font-bold text-aura-text">Achievements & Badges</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {badges.map(({ icon, label, desc }) => (
-            <div key={label} className="card-hover p-4 text-center cursor-pointer group">
-              <div className="text-3xl mb-2">{icon}</div>
-              <div className="text-xs font-semibold text-aura-text">{label}</div>
-              <div className="text-[10px] text-aura-muted mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity leading-tight">{desc}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Settings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="card p-5 space-y-4">
-          <h2 className="font-semibold text-aura-text flex items-center gap-2">
-            <Bell size={15} className="text-aura-primary" /> Notifications
-          </h2>
-          {[
-            ["Daily Study Reminders", true],
-            ["Streak Alerts", true],
-            ["Quiz Ready (Spaced Repetition)", true],
-            ["Weekly Progress Report", false],
-          ].map(([label, checked]) => (
-            <div key={String(label)} className="flex items-center justify-between">
-              <span className="text-sm text-aura-muted">{String(label)}</span>
-              <div className={`w-10 h-5 rounded-full flex items-center px-0.5 cursor-pointer transition-colors ${
-                checked ? "bg-aura-primary justify-end" : "bg-aura-border justify-start"
-              }`}>
-                <div className="w-4 h-4 rounded-full bg-white shadow" />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="card p-5 space-y-4">
-          <h2 className="font-semibold text-aura-text flex items-center gap-2">
-            <Shield size={15} className="text-aura-primary" /> Privacy & Security
-          </h2>
-          <div className="space-y-3 text-sm">
-            <button className="btn-secondary w-full justify-start text-sm">Change Password</button>
-            <button className="btn-secondary w-full justify-start text-sm">Download My Data</button>
-            <button className="w-full px-4 py-2.5 rounded-xl border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/10 transition-colors">
-              Delete Account
+            <button className="absolute bottom-0 right-0 md:bottom-2 md:right-2 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg border-2 border-white hover:bg-blue-700 transition-colors">
+               <Sparkles size={14} />
             </button>
           </div>
+          
+          <div className="text-center md:text-left">
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">Priyanshux106</h1>
+            <p className="text-slate-500 font-medium flex items-center gap-2 justify-center md:justify-start">
+              <Mail size={16} /> priyanshux@example.com
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto w-full px-6 py-8 flex-1">
+        
+        {/* Tabs */}
+        <div className="flex items-center gap-4 border-b border-slate-200 mb-8 overflow-x-auto pb-[1px]">
+          {[
+            { id: "general", label: "General Settings", icon: Settings },
+            { id: "learning", label: "Learning Preferences", icon: Target },
+            { id: "subscription", label: "Subscription", icon: ShieldCheck },
+          ].map((tab) => {
+             const Icon = tab.icon;
+             const isActive = activeTab === tab.id;
+             return (
+               <button 
+                 key={tab.id}
+                 onClick={() => setActiveTab(tab.id)}
+                 className={`flex items-center gap-2 py-4 px-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap
+                   ${isActive ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+               >
+                 <Icon size={16} /> {tab.label}
+               </button>
+             );
+          })}
+        </div>
+
+        {/* Tab Content */}
+        <div className="space-y-8 animate-in fade-in duration-300">
+          
+          {/* Personal Information Card */}
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-900 mb-6">Personal Information</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                 <label className="text-sm font-bold text-slate-700 mb-2 block">Full Name</label>
+                 <div className="relative">
+                   <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                   <input type="text" defaultValue="Priyanshux106" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-slate-900 text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors" />
+                 </div>
+              </div>
+              <div>
+                 <label className="text-sm font-bold text-slate-700 mb-2 block">Email Address</label>
+                 <div className="relative">
+                   <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                   <input type="email" defaultValue="priyanshux@example.com" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-slate-900 text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors" />
+                 </div>
+              </div>
+              <div className="md:col-span-2">
+                 <label className="text-sm font-bold text-slate-700 mb-2 block">Role or Target Career</label>
+                 <div className="relative">
+                   <Briefcase size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                   <select className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-slate-900 text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors appearance-none">
+                     <option>Full-Stack Developer</option>
+                     <option>Frontend Engineer</option>
+                     <option>Backend Developer</option>
+                     <option>Data Scientist</option>
+                     <option>Student</option>
+                   </select>
+                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Learning Goals Card */}
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-900 mb-6">Learning Goals</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                 <label className="text-sm font-bold text-slate-700 mb-2 block">Weekly Goal (Hours)</label>
+                 <div className="relative">
+                   <Clock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                   <input type="number" defaultValue="15" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-slate-900 text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors" />
+                 </div>
+              </div>
+              <div>
+                 <label className="text-sm font-bold text-slate-700 mb-2 block">Primary Focus Area</label>
+                 <div className="relative">
+                   <Target size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                   <input type="text" defaultValue="React & Next.js Ecosystem" className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-slate-900 text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors" />
+                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Notifications Card */}
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-2 mb-6">
+              <Bell size={20} className="text-slate-900" />
+              <h2 className="text-xl font-bold text-slate-900">Notifications Layout</h2>
+            </div>
+            
+            <div className="space-y-4">
+               {/* Toggle 1 */}
+               <div className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
+                 <div>
+                   <h3 className="text-sm font-bold text-slate-900">Study Reminders</h3>
+                   <p className="text-xs text-slate-500 mt-1">Receive daily push notifications to keep up your streak.</p>
+                 </div>
+                 <button 
+                   onClick={() => setReminders(!reminders)}
+                   className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-1 ${reminders ? 'bg-blue-600' : 'bg-slate-300'}`}
+                 >
+                   <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${reminders ? 'translate-x-6' : 'translate-x-0'}`} />
+                 </button>
+               </div>
+
+               {/* Toggle 2 */}
+               <div className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
+                 <div>
+                   <h3 className="text-sm font-bold text-slate-900">Weekly Progress Report</h3>
+                   <p className="text-xs text-slate-500 mt-1">Get an email summary of your achievements and XP.</p>
+                 </div>
+                 <button 
+                   onClick={() => setReports(!reports)}
+                   className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-1 ${reports ? 'bg-blue-600' : 'bg-slate-300'}`}
+                 >
+                   <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${reports ? 'translate-x-6' : 'translate-x-0'}`} />
+                 </button>
+               </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4 mb-16">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl flex items-center gap-2 transition-colors shadow-sm shadow-blue-600/20">
+              <Save size={18} /> Save Changes
+            </button>
+          </div>
+
         </div>
       </div>
     </div>

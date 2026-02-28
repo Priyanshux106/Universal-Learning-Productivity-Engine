@@ -272,6 +272,39 @@ export interface ConceptGap {
 }
 
 // -------------------------
+// Deep Study / Flashcards
+// -------------------------
+
+export interface Flashcard {
+  id: string
+  front: string
+  back: string
+}
+
+export interface FlashcardSession {
+  id: string
+  userId: string
+  subject: string
+  chapter?: string
+  totalCards: number
+  correctCount: number
+  xpEarned: number
+  timestamp: string // ISO 8601
+}
+
+export interface StudySession {
+  id: string
+  userId: string
+  durationMinutes: number
+  topic: string
+  accomplishments: string
+  xpEarned: number
+  status: 'active' | 'completed'
+  startedAt: string // ISO 8601
+  completedAt?: string // ISO 8601
+}
+
+// -------------------------
 // Lambda Request / Response Types
 // -------------------------
 
@@ -379,6 +412,55 @@ export interface GetProgressResponse {
     timeInvested: number // minutes
   }
   knowledgeGaps: ConceptGap[]
+}
+
+export interface GenerateFlashcardsRequest {
+  userId: string
+  subject: string
+  chapter?: string
+  difficulty: number
+  count: number
+}
+
+export interface GenerateFlashcardsResponse {
+  flashcards: Flashcard[]
+}
+
+export interface SaveFlashcardSessionRequest {
+  userId: string
+  subject: string
+  chapter?: string
+  totalCards: number
+  correctCount: number
+}
+
+export interface SaveFlashcardSessionResponse {
+  sessionId: string
+  xpAwarded: number
+  totalXP: number
+}
+
+export interface StartStudySessionRequest {
+  userId: string
+  durationMinutes: number
+  topic: string
+}
+
+export interface StartStudySessionResponse {
+  sessionId: string
+}
+
+export interface CompleteStudySessionRequest {
+  userId: string
+  sessionId: string
+  accomplishments: string
+}
+
+export interface CompleteStudySessionResponse {
+  success: boolean
+  summary: string
+  xpAwarded: number
+  totalXP: number
 }
 
 // -------------------------

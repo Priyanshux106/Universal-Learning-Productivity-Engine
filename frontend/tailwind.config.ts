@@ -9,16 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        aura: {
-          bg: "#08090c",
-          surface: "#0f1117",
-          card: "#13151f",
-          border: "#1e2130",
-          primary: "#7c6af7",
-          secondary: "#5b5af0",
-          accent: "#a78bfa",
-          glow: "#6d5dfc",
-          text: "#e2e8f0",
+        aura: { // Keeping the object name 'aura' to avoid massive find-replace in classes, but changing values to light theme
+          bg: "#ffffff",
+          surface: "#ffffff",
+          card: "#ffffff",
+          border: "#e2e8f0",
+          primary: "#1d4ed8",
+          secondary: "#3b82f6",
+          accent: "#60a5fa",
+          glow: "#93c5fd",
+          text: "#0f172a",
           muted: "#64748b",
           success: "#22c55e",
           warning: "#f59e0b",
@@ -30,10 +30,10 @@ const config: Config = {
         mono: ["JetBrains Mono", "Fira Code", "monospace"],
       },
       backgroundImage: {
-        "aura-gradient": "linear-gradient(135deg, #08090c 0%, #0d0e1a 50%, #08090c 100%)",
-        "card-gradient": "linear-gradient(145deg, #13151f, #0f1117)",
-        "primary-gradient": "linear-gradient(135deg, #7c6af7, #5b5af0)",
-        "glow-gradient": "radial-gradient(circle at 50% 0%, rgba(124,106,247,0.15) 0%, transparent 70%)",
+        "aura-gradient": "linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f8fafc 100%)",
+        "card-gradient": "linear-gradient(145deg, #ffffff, #f8fafc)",
+        "primary-gradient": "linear-gradient(135deg, #2563eb, #1d4ed8)",
+        "glow-gradient": "radial-gradient(circle at 50% 0%, rgba(37,99,235,0.05) 0%, transparent 70%)",
       },
       boxShadow: {
         "aura": "0 0 30px rgba(124,106,247,0.15), 0 4px 30px rgba(0,0,0,0.5)",

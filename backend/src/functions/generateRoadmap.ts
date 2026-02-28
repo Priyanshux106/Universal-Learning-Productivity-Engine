@@ -19,13 +19,13 @@ const S3_BUCKET = process.env.S3_BUCKET_NAME || 'studdybuddy-logs'
 
 function validateRequest(data: unknown): GenerateRoadmapRequest {
   const req = data as GenerateRoadmapRequest
-  if (!req.userId || typeof req.userId !== 'string') {
-    const err = new Error('userId is required')
+  if (!req.goal?.title || !req.goal?.targetConcepts?.length) {
+    const err = new Error('goal.title and goal.targetConcepts are required')
     ;(err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
     throw err
   }
-  if (!req.goal?.title || !req.goal?.targetConcepts?.length) {
-    const err = new Error('goal.title and goal.targetConcepts are required')
+  if (req.goal.title.length > 500) {
+    const err = new Error('goal.title cannot exceed 500 characters')
     ;(err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
     throw err
   }
@@ -36,9 +36,15 @@ const handler = async (
   event: APIGatewayProxyEventV2,
   context: Context
 ): Promise<APIGatewayProxyResultV2> => {
-  logger.setContext(context.awsRequestId, 'system', 'generateRoadmap')
+  const userId = (event.requestContext as any).authorizer?.jwt?.claims?.sub as string
+  if (!userId) {
+    throw Object.assign(new Error('Unauthorized'), { code: ErrorCode.UNAUTHORIZED })
+  }
+
+  logger.setContext(context.awsRequestId, userId, 'generateRoadmap')
 
   const req = parseBody(event, validateRequest)
+  req.userId = userId
   logger.info('Generating roadmap', { userId: req.userId, goal: req.goal.title })
 
   // Generate roadmap via Bedrock

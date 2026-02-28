@@ -43,6 +43,8 @@ export const TABLES = {
   CODE_LOGS: `${TABLE_PREFIX}-codelogs`,
   XP_HISTORY: `${TABLE_PREFIX}-xphistory`,
   CONCEPTS: `${TABLE_PREFIX}-concepts`,
+  FLASHCARD_SESSIONS: `${TABLE_PREFIX}-flashcards`,
+  STUDY_SESSIONS: `${TABLE_PREFIX}-studysessions`,
 }
 
 // Key helpers
@@ -75,6 +77,14 @@ export const keys = {
   concept: (conceptId: string) => ({
     PK: `CONCEPT#${conceptId}`,
     SK: 'META',
+  }),
+  flashcardSession: (userId: string, sessionId: string) => ({
+    PK: `USER#${userId}`,
+    SK: `FLASHCARD#${sessionId}`,
+  }),
+  studySession: (userId: string, sessionId: string) => ({
+    PK: `USER#${userId}`,
+    SK: `STUDY#${sessionId}`,
   }),
 }
 

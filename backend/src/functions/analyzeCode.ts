@@ -26,11 +26,6 @@ const MAX_CODE_SIZE = 64 * 1024 // 64KB
 
 function validateRequest(data: unknown): AnalyzeCodeRequest {
   const req = data as AnalyzeCodeRequest
-  if (!req.userId) {
-    const err = new Error('userId is required')
-    ;(err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
-    throw err
-  }
   if (!req.code || typeof req.code !== 'string') {
     const err = new Error('code is required')
     ;(err as Error & { code: string }).code = ErrorCode.INVALID_INPUT
@@ -53,7 +48,13 @@ const handler = async (
   event: APIGatewayProxyEventV2,
   context: Context
 ): Promise<APIGatewayProxyResultV2> => {
+  const userId = (event.requestContext as any).authorizer?.jwt?.claims?.sub as string
+  if (!userId) {
+    throw Object.assign(new Error('Unauthorized'), { code: ErrorCode.UNAUTHORIZED })
+  }
+
   const req = parseBody(event, validateRequest)
+  req.userId = userId
   logger.setContext(context.awsRequestId, req.userId, 'analyzeCode')
   logger.info('Analyzing code', { userId: req.userId, language: req.language, codeLen: req.code.length })
 
